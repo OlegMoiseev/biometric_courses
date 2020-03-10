@@ -1,11 +1,11 @@
 import cv2
 from matplotlib import pyplot as plt
 
-for i in range(1, 12):
+for i in range(1, 9):
     name = 'photos/' + str(i) + '.jpg'
 
     img = cv2.imread(name, 0)
-    template = cv2.imread('photos/me_template.jpg', 0)  # read template of me
+    template = cv2.imread('photos/crop_template.jpg', 0)  # read template of me
     w, h = template.shape[::-1]
 
     meth = cv2.TM_SQDIFF_NORMED
