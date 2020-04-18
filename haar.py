@@ -5,6 +5,7 @@ eye_cascade = cv2.CascadeClassifier('haar/haarcascade_eye.xml')
 
 for i in range(1, 9):
     name = 'photos/' + str(i) + '.jpg'
+
     img = cv2.imread(name)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
