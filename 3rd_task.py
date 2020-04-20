@@ -37,20 +37,33 @@ def get_trains_tests():
     return x_train, x_test, y_train, y_test
 
 
-def predict_hist(new_face, train):
-    hist = get_histogram(new_face)
+def predict_method(method, new_face, train):
+    hist = method(new_face)
     dists = [np.linalg.norm(hist - res, ord=2) for res, _, _ in train]
     win = dists.index(min(dists))
     return train[win][1]  # return class_face
 
 
+def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
+    train_res = []
+    for image, class_face in zip(arg_x_tr, arg_y_tr):
+        train_res.append((method(image), class_face, image))
+
+    right = 0
+    for image, answer in zip(arg_x, arg_y):
+
+        res = predict_method(method, image, train_res)
+        if res == answer:
+            right += 1
+        else:
+            print(res, answer)
+    accuracy = right / len(face_test)
+    print(accuracy)
+
+
 if __name__ == '__main__':
     face_train, face_test, class_train, class_test = get_trains_tests()
-    train_res = []
-    for image, class_face in zip(face_train, class_train):
-        train_res.append((get_histogram(image), class_face, image))
+    test_method(get_histogram, face_train, face_test, class_train, class_test)
 
-    for image in face_test:
-        print(predict_hist(image, train_res))
 # тренируемся - то есть записываем метрики для каждого изображения. Потом делаем тест, кидая на вход лицо из уже
 # тренированных - так получаем точность в 100%. Потом кидаем что-то новое - тогда должны получить около 100%.
