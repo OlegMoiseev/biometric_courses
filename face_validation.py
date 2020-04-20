@@ -24,21 +24,21 @@ def get_gradient(image):
     return gr
 
 
-name = 'photos/faces/s34/8.pgm'
-img = cv2.imread(name, 0)
-# example_hist, _ = get_histogram(img)
+if __name__ == "__main__":
+    name = 'photos/valid_40_5.pgm'
+    img = cv2.imread(name, 0)
+    # example_hist, _ = get_histogram(img)
 
-example_dft = get_dft(img)[0]
+    example_dft = get_dft(img)[0]
 
 
-means = []
-for i in range(1, 41):
+    names = ['1_1', '2_2', '5_3', '21_8', '26_4', '31_8', '32_5', '32_10', '40_2', '40_10']
     dists = []
-    for j in range(1, 11):
-        name = 'photos/faces/s' + str(i) + '/' + str(j) + '.pgm'
+    for name in names:
+        name = 'photos/photos_for_valid/' + name + '.pgm'
         img = cv2.imread(name, 0)
+        cv2.imshow('name', img)
         dft = get_dft(img)[0]
         dist = np.linalg.norm(example_dft - dft, ord=2)
         dists.append(dist)
-    means.append(np.mean(dists))
-print(np.argmin(means) + 1, ':', min(means))
+    print(names[np.argmin(dists)], ':', min(dists))
