@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_olivetti_faces
 
 
-# from face_validation import get_histogram
-
 def get_histogram(image: np.ndarray):
     hist, _ = np.histogram(image, bins=np.linspace(0, 1))
     return hist
@@ -41,7 +39,7 @@ def predict_method(method, new_face, train):
     hist = method(new_face)
     dists = [np.linalg.norm(hist - res, ord=2) for res, _, _ in train]
     win = dists.index(min(dists))
-    return train[win][1]  # return class_face
+    return train[win][1], train[win][2]  # return class_face, image
 
 
 def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
@@ -50,13 +48,38 @@ def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
         train_res.append((method(image), class_face, image))
 
     right = 0
+    fig = plt.figure()
+
     for image, answer in zip(arg_x, arg_y):
 
-        res = predict_method(method, image, train_res)
+        res, img_closest = predict_method(method, image, train_res)
+
         if res == answer:
             right += 1
+            fig.patch.set_facecolor('xkcd:light green')
         else:
-            print(res, answer)
+            # print(res, answer)
+            fig.patch.set_facecolor('xkcd:salmon')
+
+        plt.title("Closest images")
+
+        ax2 = plt.subplot(421)
+        ax2.imshow(img_closest, cmap='gray')  # Values >0.0 zoom out
+        ax2.set_title(f'test ({answer})')
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+
+        ax3 = plt.subplot(422)
+        ax3.imshow(image, cmap='gray')
+        ax3.set_title(f'closest ({res})')
+        ax3.set_xticks([])
+        ax3.set_yticks([])
+
+        plt.draw()
+        plt.pause(1)
+        plt.clf()
+
+
     accuracy = right / len(face_test)
     print(accuracy)
 
