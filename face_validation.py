@@ -6,7 +6,7 @@ from PIL import Image
 from numpy import random
 
 
-def get_histogram(image: np.ndarray):
+def get_histogram(image: np.ndarray, param=None):
     hist, _ = np.histogram(image, bins=np.linspace(0, 1))
     return hist
 

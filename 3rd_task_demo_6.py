@@ -16,7 +16,7 @@ def get_trains_tests():
     x_train, x_test, y_train, y_test = [], [], [], []
 
     for i in range(0, images_all, images_per_person):
-        num_of_samples = 9
+        num_of_samples = 8
         indices = list(range(i, i + num_of_samples))
 
         indices = rnd.sample(indices, num_of_samples)  # shuffle samples
@@ -113,16 +113,18 @@ def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
         plt.pause(0.01)
         plt.clf()
 
-    accuracy = right / len(face_test)
+    accuracy = right / len(arg_x)
     print(accuracy)
     plt.close(fig)
 
 
 if __name__ == '__main__':
     methods = [get_random_points, get_scale, get_gradient, get_histogram, get_dct, get_dft]
+
     face_train, face_test, class_train, class_test = get_trains_tests()
     for method in methods:
         test_method(method, face_train, face_test, class_train, class_test)
 
 # тренируемся - то есть записываем метрики для каждого изображения. Потом делаем тест, кидая на вход лицо из уже
 # тренированных - так получаем точность в 100%. Потом кидаем что-то новое - тогда должны получить около 100%.
+
