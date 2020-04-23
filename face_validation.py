@@ -29,7 +29,7 @@ def get_random_points(image, points):
     return res
 
 
-def get_gradient(image, n=3):
+def get_gradient(image, n=2):
     shape = image.shape[0]
     i, l = 0, 0
     r = n

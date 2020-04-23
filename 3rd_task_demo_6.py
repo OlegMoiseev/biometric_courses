@@ -51,7 +51,7 @@ def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
         for image, class_face in zip(arg_x_tr, arg_y_tr):
             train_res.append((method(image), class_face, image))
     else:
-        num_points = 155
+        num_points = 145
         points = np.array([random.randint(0, 64, (1, 2)) for _ in range(num_points)])
         for image, class_face in zip(arg_x_tr, arg_y_tr):
             train_res.append((method(image, points), class_face, image))
