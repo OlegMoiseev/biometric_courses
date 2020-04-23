@@ -6,18 +6,18 @@ from PIL import Image
 from numpy import random
 
 
-def get_histogram(image: np.ndarray, param=None):
-    hist, _ = np.histogram(image, bins=np.linspace(0, 1))
+def get_histogram(image: np.ndarray, param=30):
+    hist, _ = np.histogram(image, bins=np.linspace(0, 1, param))
     return hist
 
 
-def get_dft(image, mat_side=8):
+def get_dft(image, mat_side=13):
     f = np.fft.fft2(image)
     f = f[0:mat_side, 0:mat_side]
     return np.abs(f)
 
 
-def get_dct(image, mat_side=8):
+def get_dct(image, mat_side=13):
     c = dct(image, axis=1)
     c = dct(c, axis=0)
     c = c[0:mat_side, 0:mat_side]
@@ -45,7 +45,7 @@ def get_gradient(image, n=3):
     return result
 
 
-def get_scale(image, scale=0.1):
+def get_scale(image, scale=0.35):
     h = image.shape[0]
     w = image.shape[1]
     new_size = (int(h * scale), int(w * scale))

@@ -183,36 +183,103 @@ def dif_params(method, start_param, stop_param, step_param, arg_x_tr, arg_x, arg
     plt.show()
 
 
+def k_fold_get_indices(k=3):
+    images_all = 400
+    images_per_person = 10
+    train_ind_all, test_ind_all = [], []
+    num_test = int(images_per_person / k)
+    num_train = images_per_person - num_test
+
+    chunks = [[] for _ in range(k)]
+    for i in range(0, images_all, images_per_person):
+        indices = list(range(i, i + images_per_person))
+        rnd.shuffle(indices)
+        res = np.array_split(np.array(indices), k)
+        for j, chunk in enumerate(res):
+            chunks[j].extend(sorted(chunk))
+
+    for i in range(k):
+        cur_test = i
+        test_indices = chunks[cur_test]
+        train_indices = []
+        for j in range(i):
+            train_indices.extend(chunks[j])
+        for j in range(i+1, k):
+            train_indices.extend(chunks[j])
+
+        train_ind_all.append(train_indices)
+        test_ind_all.append(test_indices)
+    return test_ind_all, train_ind_all
+
+
+def k_fold_get_data(k=3):
+    test_indices, train_indices = k_fold_get_indices(k)
+    data_images = fetch_olivetti_faces()
+    data_faces = data_images.images
+    data_target = data_images.target
+
+    x_train, y_train, x_test, y_test = [[] for _ in range(k)], [[] for _ in range(k)],\
+                                       [[] for _ in range(k)], [[] for _ in range(k)]
+
+    for i in range(k):
+        indices = train_indices[i]
+        x_train[i].extend(data_faces[index] for index in indices)
+        y_train[i].extend(data_target[index] for index in indices)
+
+        remaining_indices = test_indices[i]
+        x_test[i].extend(data_faces[index] for index in remaining_indices)
+        y_test[i].extend(data_target[index] for index in remaining_indices)
+
+    return x_train, y_train, x_test, y_test
+
+
+def k_fold(k=3):
+    # scale: 0.05, 1.0, 0.05
+    # hist: 5, 60, 5
+    # dft: 2, 20, 1
+    # dct: 2, 20, 1
+    # grad: 1, 10, 1
+    # rnd: 5, 170, 5
+    x_train_list, y_train_list, x_test_list, y_test_list = k_fold_get_data(k)
+    methods = [get_random_points, get_scale, get_gradient, get_histogram, get_dct, get_dft]
+    method = get_random_points
+
+    meth_name = method.__name__[4:]
+    fig = plt.figure(num=meth_name)
+
+    start_param, stop_param, step_param = 5, 170, 5
+    x_graph, y_graph = [], []
+    for param in np.arange(start_param, stop_param, step_param):
+        num_points = param
+        points = np.array([random.randint(0, 64, (1, 2)) for _ in range(num_points)])
+
+        accuracies = []
+        for i in range(k):
+            train_res = []
+            for image, class_face in zip(x_train_list[i], y_train_list[i]):
+                train_res.append((method(image, points), class_face, image))
+            right = 0
+            for image, answer in zip(x_test_list[i], y_test_list[i]):
+                res, img_closest, method_res = predict_method(method, image, train_res, points=points)
+                if res == answer:
+                    right += 1
+            accuracy = right / len(x_test_list[i])
+            accuracies.append(accuracy)
+
+        x_graph.append(param)
+        y_graph.append(np.mean(accuracies))
+        print(param, np.mean(accuracies))
+        plt.clf()
+        plt.plot(x_graph, y_graph, '.-')
+
+        plt.draw()
+        plt.pause(0.01)
+    plt.show()
 
 
 
 if __name__ == '__main__':
-    # methods = [get_random_points, get_scale, get_gradient, get_histogram, get_dct, get_dft]
-    methods = [get_scale, get_gradient, get_histogram, get_dct, get_dft]
-
-    face_train, face_test, class_train, class_test = get_trains_tests()
-    # for method in methods:
-    #     test_method(method, face_train, face_test, class_train, class_test)
-
-    # dif_params(methods[1], 0.05, 1.05, 0.05, face_train, face_test, class_train, class_test)
-
-    trains = []
-    for method in methods:
-        meth_name = method.__name__[4:]
-
-        train_res = []
-        if meth_name != 'random_points':
-            for image, class_face in zip(face_train, class_train):
-                train_res.append((method(image), class_face, image))
-        else:
-            num_points = 155
-            points = np.array([random.randint(0, 64, (1, 2)) for _ in range(num_points)])
-            for image, class_face in zip(face_train, class_train):
-                train_res.append((method(image, points), class_face, image))
-
-        trains.append(train_res)
-    print(len(trains))
-    test_vote(trains, face_test, class_test)
+    k_fold(3)
 # тренируемся - то есть записываем метрики для каждого изображения. Потом делаем тест, кидая на вход лицо из уже
 # тренированных - так получаем точность в 100%. Потом кидаем что-то новое - тогда должны получить около 100%.
 

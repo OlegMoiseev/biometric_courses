@@ -119,7 +119,7 @@ def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
 
 
 if __name__ == '__main__':
-    methods = [get_random_points, get_scale, get_gradient, get_histogram, get_dct, get_dft]
+    methods = [get_scale, get_histogram, get_random_points, get_gradient, get_dct, get_dft]
 
     face_train, face_test, class_train, class_test = get_trains_tests()
     for method in methods:
