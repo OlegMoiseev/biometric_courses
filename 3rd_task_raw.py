@@ -7,7 +7,42 @@ from face_validation import get_dct, get_dft, get_gradient, get_scale, get_histo
 from collections import Counter
 
 
-def get_trains_tests():
+def vote(image, trains):
+    results = []
+    for method, train in zip(methods, trains):
+        meth_name = method.__name__[4:]
+
+        if meth_name != 'random_points':
+            res, img_closest, method_res = predict_method(method, image, train)
+
+        else:
+            res, img_closest, method_res = predict_method(method, image, train, points)
+
+        results.append(res)
+    win = Counter(results).most_common()[0][0]
+    return win
+
+
+def test_vote(trained, arg_x, arg_y):
+    x_acc, y_acc = [], []
+    counter, right = 0, 0
+    accuracy = 0
+    for image, answer in zip(arg_x, arg_y):
+        res = vote(image, trained)
+        if res == answer:
+            right += 1
+        counter += 1
+        accuracy = right / counter
+        x_acc.append(counter)
+        y_acc.append(accuracy)
+        plt.clf()
+        plt.plot(x_acc, y_acc)
+        plt.pause(0.01)
+    plt.show()
+    return accuracy
+
+
+def get_trains_tests(num_of_samples=5):
     data_images = fetch_olivetti_faces()
     data_faces = data_images.images
     data_target = data_images.target
@@ -17,7 +52,6 @@ def get_trains_tests():
     x_train, x_test, y_train, y_test = [], [], [], []
 
     for i in range(0, images_all, images_per_person):
-        num_of_samples = 8
         indices = list(range(i, i + num_of_samples))
 
         indices = rnd.sample(indices, num_of_samples)  # shuffle samples
@@ -43,107 +77,70 @@ def predict_method(method, new_face, train, points=None):
     return train[win][1], train[win][2], train[win][0]  # return class_face, image, result of method
 
 
-def vote(image, trains):
-    results = []
+def test_method(method, arg_x_tr, arg_x, arg_y_tr, arg_y):
+    meth_name = method.__name__[4:]
+    print(meth_name)
 
-    plots = [ax1, ax2, ax3, ax4, ax5, ax6]
-    for method, train, plot in zip(methods, trains, plots):
-        meth_name = method.__name__[4:]
+    train_res = []
+    if meth_name != 'random_points':
+        for image, class_face in zip(arg_x_tr, arg_y_tr):
+            train_res.append((method(image), class_face, image))
+    else:
+        num_points = 145
+        points = np.array([random.randint(0, 64, (1, 2)) for _ in range(num_points)])
+        for image, class_face in zip(arg_x_tr, arg_y_tr):
+            train_res.append((method(image, points), class_face, image))
 
-        if meth_name != 'random_points':
-            res, img_closest, method_res = predict_method(method, image, train)
-
-            is_chart = len(method_res.shape) == 1  # if chart -> len 1, if image -> len 2
-            plot.cla()
-            plot.set_xticks([])
-            plot.set_yticks([])
-            plot.plot(method_res) if is_chart else plot.imshow(method_res, cmap='gray')
-
-        else:
-            res, img_closest, method_res = predict_method(method, image, train, points)
-            plot.cla()
-
-            plot.set_xticks([])
-            plot.set_yticks([])
-            plot.imshow(img_closest, cmap='gray')
-            plot.scatter(x=[point[0][0] for point in points], y=[point[0][1] for point in points], c='r')
-
-        results.append(res)
-    win = Counter(results).most_common()[0][0]
-    return win
-
-
-def test_vote(trained, arg_x, arg_y):
+    right, counter = 0, 0
+    fig = plt.figure(num=meth_name)
     x_acc, y_acc = [], []
-    counter, right = 0, 0
-
     for image, answer in zip(arg_x, arg_y):
-        res = vote(image, trained)
-
-        ax0.cla()
-        ax0.set_title('Current image:')
-        ax0.set_xticks([])
-        ax0.set_yticks([])
-
-        ax0.imshow(image, cmap='gray')
+        if meth_name != 'random_points':
+            res, img_closest, method_res = predict_method(method, image, train_res)
+        else:
+            res, img_closest, method_res = predict_method(method, image, train_res, points)
 
         if res == answer:
             right += 1
-            fig.patch.set_facecolor('xkcd:light green')
-        else:
-            fig.patch.set_facecolor('xkcd:salmon')
+
         counter += 1
-        accuracy = right / counter
-        print(accuracy)
         x_acc.append(counter)
-        y_acc.append(accuracy)
+        curr_accuracy = right / counter
+        y_acc.append(curr_accuracy)
+        plt.plot(x_acc, y_acc)
 
-        ax7.cla()
-        ax7.set_title(f'Current VOTE accuracy: {accuracy:.2f}')
-
-        ax7.plot(x_acc, y_acc)
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(0.01)
+        plt.clf()
+    plt.plot(x_acc, y_acc)
+
+    accuracy = right / len(arg_x)
+    print(accuracy)
+    plt.show()
+    plt.close(fig)
 
 
 if __name__ == '__main__':
     methods = [get_random_points, get_scale, get_gradient, get_histogram, get_dct, get_dft]
-    # methods = [get_scale, get_gradient, get_histogram, get_dct, get_dft]
 
     face_train, face_test, class_train, class_test = get_trains_tests()
 
     trains = []
-    num_points = 145
-    points = np.array([random.randint(0, 64, (1, 2)) for _ in range(num_points)])
-
     for method in methods:
         meth_name = method.__name__[4:]
-        print(meth_name)
+
         train_res = []
         if meth_name != 'random_points':
             for image, class_face in zip(face_train, class_train):
                 train_res.append((method(image), class_face, image))
         else:
-
+            num_points = 155
+            points = np.array([random.randint(0, 64, (1, 2)) for _ in range(num_points)])
             for image, class_face in zip(face_train, class_train):
                 train_res.append((method(image, points), class_face, image))
+
         trains.append(train_res)
+    acc_vote = test_vote(trains, face_test, class_test)
 
-    fig = plt.figure(num='VOTE')
-
-    s_plots_code = [434, 435, 436, 437, 438, 439]   # num strings, cols
-    ax0 = plt.subplot(432)
-    ax1 = plt.subplot(434)
-    ax2 = plt.subplot(435)
-    ax3 = plt.subplot(436)
-    ax4 = plt.subplot(437)
-    ax5 = plt.subplot(438)
-    ax6 = plt.subplot(439)
-
-    ax7 = plt.subplot(414)
-
-    plt.subplots_adjust(hspace=.5)
-    test_vote(trains, face_test, class_test)
 # тренируемся - то есть записываем метрики для каждого изображения. Потом делаем тест, кидая на вход лицо из уже
 # тренированных - так получаем точность в 100%. Потом кидаем что-то новое - тогда должны получить около 100%.
-
